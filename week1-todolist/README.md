@@ -32,7 +32,7 @@ For a detailed explanation on how things work, check out the [guide](http://vuej
 
 如還是不妥請告知，會立即卸下
 
-```
+``` bash
 # 啟用 json-server
 json-server -p 3000 db.json
 ```
