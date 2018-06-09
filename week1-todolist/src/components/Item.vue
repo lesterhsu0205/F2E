@@ -41,7 +41,6 @@ export default {
     // 更新狀態 (欄位、值)，這裡合併了 Stared, Completed 兩個欄位
     updateStatus(field, state) {
       const vm = this
-      const api = `http://localhost:5000/todos/${vm.todo.id}`
       // 為了避免物件傳參考特性，因此使用 ES6 解構
       const todo = {
         ...vm.todo
@@ -49,9 +48,9 @@ export default {
       // 同時更新編輯的欄位及值
       todo[field] = state
       // 更新使用 put
-      vm.$http.put(api, todo).then((response) => {
+      vm.$http.put(vm.api.getTodoList.concat('/', vm.todo.id), todo).then((response) => {
         console.log(response)
-        vm.$emit('updateData')
+        vm.$emit('refreshData`')
       })
     },
     editTodo() {

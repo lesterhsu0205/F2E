@@ -15,13 +15,13 @@
 
       <div class="mt-4">
         <transition name="slide">
-          <edit-todo v-if="isNewTodo && !currentEdit.id" @updateData="getData" @closeEditTodo="closeEdit"></edit-todo>
+          <edit-form v-if="isNewTodo && !currentEdit.id" :todo="currentEdit" @refreshData="getData" @closeEditTodo="closeEdit"></edit-form>
         </transition>
 
         <draggable v-model="todoItem" :options="{handle: '.handle'}" @end="sort">
           <div v-for="item in todoItem" :key="item.id" v-if="currentTab === 'myTask' || currentTab == item.completed">
-            <item v-if="!Object.is(currentEdit.id, item.id)" :todo="item" @updateData="getData" @editTodo="edit"></item>
-            <edit-form v-if="Object.is(currentEdit.id, item.id)" :todo="currentEdit" @updateData="getData" @closeEditTodo="closeEdit"></edit-form>
+            <item v-if="!Object.is(currentEdit.id, item.id)" :todo="item" @refreshData="getData" @editTodo="edit"></item>
+            <edit-form v-if="Object.is(currentEdit.id, item.id)" :todo="currentEdit" @refreshData="getData" @closeEditTodo="closeEdit"></edit-form>
           </div>
         </draggable>
       </div>
@@ -103,19 +103,21 @@
         const vm = this;
         vm.todoItem = [];
         // FIXME : json server 在展示時有點麻煩，axios 不知為啥無法 call local file，先用 static data
-        // vm.$http
-        //   .get(vm.api.getTodoList)
-        //   .then(response => {
-            // response.data
-            vm.localData.todoItems.forEach((item) => {
-              vm.todoItem.push(item);
-            });
+        vm.$http
+          .get(vm.api.getTodoList)
+          .then(response => {
+            response.data
+              // vm.localData.todoItems
+              .forEach((item) => {
+                vm.todoItem.push(item);
+              });
 
             // 排序
             vm.todoItem.sort((a, b) => {
               return a.order > b.order ? 1 : -1;
             });
-          // });
+          });
+
       },
       edit(id) {
         this.isNewTodo = false;
