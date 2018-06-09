@@ -54,9 +54,46 @@
         todoItem: [],
         currentEdit: {},
         isNewTodo: false,
-        currentTab: 'myTask'
+        currentTab: 'myTask',
+        localData: {
+          todoItems: [{
+              message: "第一筆資料",
+              startDate: "2018-06-01",
+              endDate: "2018-06-06",
+              timestamp: 1528270961,
+              stared: false,
+              completed: "completed",
+              comments: [],
+              id: 1,
+              order: 2
+            },
+            {
+              message: "第二筆資料",
+              startDate: "2018-06-01",
+              endDate: "2018-06-06",
+              timestamp: 1528271043,
+              stared: false,
+              completed: "completed",
+              comments: [],
+              id: 2,
+              order: 1
+            },
+            {
+              message: "第三筆資料",
+              startDate: "2018-06-01",
+              endDate: "2018-06-06",
+              timestamp: 1528277505,
+              stared: false,
+              completed: "completed",
+              comments: [],
+              id: 3,
+              order: 0
+            }
+          ]
+        }
       };
     },
+
     methods: {
       add() {
         this.isNewTodo = true;
@@ -65,10 +102,12 @@
       getData() {
         const vm = this;
         vm.todoItem = [];
-        vm.$http
-          .get(vm.api.getTodoList)
-          .then(response => {
-            response.data.forEach((item) => {
+        // FIXME : json server 在展示時有點麻煩，axios 不知為啥無法 call local file，先用 static data
+        // vm.$http
+        //   .get(vm.api.getTodoList)
+        //   .then(response => {
+            // response.data
+            vm.localData.todoItems.forEach((item) => {
               vm.todoItem.push(item);
             });
 
@@ -76,7 +115,7 @@
             vm.todoItem.sort((a, b) => {
               return a.order > b.order ? 1 : -1;
             });
-          });
+          // });
       },
       edit(id) {
         this.isNewTodo = false;
