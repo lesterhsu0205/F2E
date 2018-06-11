@@ -50,7 +50,7 @@
           <button class="btn text-danger w-50 btn-lg" @click="closeEdit">
             <i class="fas fa-times"></i> Cancel
           </button>
-          <button class="btn btn-primary w-50 btn-lg" @click="updateTodo">
+          <button class="btn btn-primary w-50 btn-lg" @click="update">
             <i class="fas fa-plus"></i> Update Task
           </button>
         </div>
@@ -63,72 +63,12 @@
 export default {
   name: 'EditForm',
   props: ['todo'],
-  data() {
-    return {
-      // 編輯的欄位都會先以 cacheTodo 暫存
-      // 避免直接編輯到原有的資料
-      cacheTodo: {},
-      comment: '',
-      // 判斷是否為新的資料，會觸發的 API 略有不同
-      isNew: false
-    }
-  },
-  methods: {
-    // 更新留言
-    updateComment() {
-      const vm = this
-      if (!vm.comment) {
-        return
-      }
-      const todo = {
-        ...vm.todo
-      }
-      // 留言使用 push 的方式新增，並與先前的全部加入到 Json-server 上
-      todo.comments.push(vm.comment)
-      vm.$http.put(vm.api.getTodoList.concat('/', vm.todo.id), todo).then((response) => {
-        console.log(response)
-        vm.comment = ''
-        vm.$emit('refreshData')
-      })
-    },
-    // 更新或新增 Todo
-    updateTodo() {
-      const vm = this
-      const todo = {
-        ...vm.cacheTodo
-      }
-
-      todo.comments = [
-          vm.comment
-      ]
-
-      // Message 不能為空
-      if (!vm.cacheTodo.message) {
-        alert('請輸入訊息')
-        return
-      }
-      if (this.isNew) {
-        const api = vm.api.getTodoList
-        // 假設是新的，預設加入一些欄位
-        todo.timestamp = Math.floor(Date.now() / 1000)
-        todo.stared = false
-        todo.completed = 'progress'
-        vm.$http.post(api, todo).then((response) => {
-          vm.$emit('closeEditTodo')
-          vm.$emit('refreshData')
-        })
-      } else {
-        // 假設是舊的，就推到指定 ID
-        vm.$http.put(vm.api.getTodoList.concat('/', vm.todo.id), todo).then((response) => {
-          console.log(response)
-          vm.$emit('closeEditTodo')
-          vm.$emit('refreshData')
-        })
-      }
-    },
-    closeEdit() {
-      // 關閉內容時，讓外層了解並觸發
-      this.$emit('closeEditTodo')
+  mounted() {
+    if (!this.todo.id) {
+      this.isNew = true
+    } else {
+      // 如果為舊有資料則使用解構傳至 cacheTodo 避免物件參考特性
+      this.cacheTodo = { ...this.todo}
     }
   },
   watch: {
@@ -137,15 +77,70 @@ export default {
       this.cacheTodo = { ...this.todo}
     }
   },
-  created() {
-    // 判斷是否為新資料
-    // 如果為舊有資料則使用解構傳至 cacheTodo 避免物件參考特性
-    if (!this.todo) {
-      this.isNew = true
-    } else {
-      this.cacheTodo = { ...this.todo
-      }
+  data() {
+    return {
+      cacheTodo: {},
+      comment: null,
+      isNew: false
     }
-  }
+  },
+  methods: {
+    updateComment() {
+      const vm = this
+      if (!vm.comment) {
+        return
+      }
+      const todo = {
+        ...vm.todo
+      }
+      todo.comments.push(vm.comment)
+      vm.$http.put(vm.api.getTodoList.concat('/', vm.todo.id), todo).then((response) => {
+        console.log(response)
+        vm.comment = null
+      })
+    },
+    update() {
+      const vm = this
+      const todo = {
+        ...vm.cacheTodo
+      }
+
+      if (!vm.cacheTodo.message) {
+        alert('請輸入訊息')
+        return
+      }
+
+      if (this.isNew) {
+        const api = vm.api.getTodoList
+        todo.timestamp = Math.floor(Date.now() / 1000)
+        todo.stared = false
+        todo.completed = 'progress'
+        todo.comments = []
+        if (vm.comment) {
+          todo.comments.push(vm.comment)
+        }
+        vm.$http.post(api, todo).then((res) => {
+          if (Object.is(res.statusText, 'Created')) {
+            // 可能改成建立完 item 多一個打開的 editform 上面也會有 + 
+            vm.closeEdit()
+          }
+        });
+      } else {
+        if (vm.comment) {
+          todo.comments.push(vm.comment)
+        }
+        vm.$http.put(vm.api.getTodoList.concat('/', vm.todo.id), todo).then((response) => {
+          console.log(response)
+        })
+      }
+
+      vm.comment = null
+    },
+    closeEdit() {
+      this.$emit('closeEdit')
+      this.$emit('refresh')
+    }
+  },
 }
+
 </script>

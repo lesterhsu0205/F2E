@@ -1,24 +1,24 @@
 <template>
   <div class="mb-4">
-    <div class="todo-item" :class="{stared: todo.stared}">
+    <div class="todo-item" :class="{stared: stared}">
       <div class="handle text-muted"><i class="fas fa-ellipsis-v"></i></div>
       <div class="todo-header">
         <div class="todo-check">
-          <input type="checkbox" :id="`todo-check-${todo.id}`" v-model="todo.completed"
+          <input type="checkbox" :id="'todo-check-'.concat(todo.id)" v-model="todo.completed"
             @change="updateStatus('completed', todo.completed)"
-            :true-value="'completed'"
-            :false-value="'progress'">
+            true-value="completed" false-value="progress">
           <label :for="`todo-check-${todo.id}`"></label>
         </div>
-        <label class="todo-title" :for="`todo-check-${todo.id}`">
-          <span :class="{completed: todo.completed === 'completed' }">{{ todo.message }}</span>
+        <label class="todo-title" :for="'todo-check-'.concat(todo.id)">
+          <span :class="{completed: Object.is(todo.completed, 'completed')}">{{ todo.message }}</span>
         </label>
         <div class="todo-control">
-          <a href="#" class="text-muted" @click.prevent="updateStatus('stared', !todo.stared)">
-            <i class="far fa-star mr-3" v-if="!todo.stared"></i>
+          <a href="#" class="text-muted" @click.prevent="updateStatus('stared', !stared)">
+            <i class="far fa-star mr-3" v-if="!this.stared"></i>
             <i class="fas fa-star mr-3" v-else></i>
           </a>
-          <a href="#" class="text-muted" @click.prevent="editTodo"><i class="fas fa-pencil-alt"></i></a>
+          <a href="#" class="text-muted" @click.prevent="editTodo"><i class="fas fa-pencil-alt mr-3"></i></a>
+          <a href="#" class="text-muted" @click.prevent="remove"><i class="fas fa-trash-alt mr-3"></i></a>
         </div>
       </div>
       <div class="todo-footer text-secondary">
@@ -37,26 +37,46 @@
 export default {
   name: 'Item',
   props: ['todo'],
+  data() {
+    return {
+      // 沒有 v-model 再綁定，只能用這奧步
+      stared: this.$props.todo.stared,
+    }
+  },
   methods: {
-    // 更新狀態 (欄位、值)，這裡合併了 Stared, Completed 兩個欄位
     updateStatus(field, state) {
       const vm = this
       // 為了避免物件傳參考特性，因此使用 ES6 解構
       const todo = {
         ...vm.todo
       }
-      // 同時更新編輯的欄位及值
+
       todo[field] = state
-      // 更新使用 put
+
       vm.$http.put(vm.api.getTodoList.concat('/', vm.todo.id), todo).then((response) => {
+
         console.log(response)
-        vm.$emit('refreshData`')
+
+        if (Object.is(response.statusText, 'OK') && Object.is('stared', field)) {
+          vm.stared = state
+        }
       })
     },
     editTodo() {
-      // 更新內容時，讓外層了解並觸發更新
-      this.$emit('editTodo', this.todo.id)
+      this.$emit('edit', this.todo.id)
+    },
+    remove() {
+      const vm = this
+      vm.$http.delete(vm.api.getTodoList.concat('/', vm.todo.id)).then((response) => {
+
+        console.log(response)
+
+        if (Object.is(response.statusText, 'OK')) {
+          vm.$emit('refresh')
+        }
+      })
     }
   }
 }
+
 </script>
